@@ -214,4 +214,5 @@ results_*.txt
 *.txt
 # ...but keep this one tracked
 !todo.txt
+!requirements.txt
 
