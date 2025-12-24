@@ -1,0 +1,103 @@
+No license is granted. Do not reuse or redistribute.
+USES PYTHON 3.11
+
+TODO / PROJECT NOTES (Prototype)
+
+This repository is a cleaned-up prototype for a large-scale strategy search + backtesting pipeline
+over OHLCV market data. It is intentionally simplified and currently optimised for fast iteration
+and experimentation rather than realism.
+
+============================================================
+WHAT THIS PROTOTYPE CURRENTLY DOES
+============================================================
+
+1) Loads / manages historical OHLCV data
+- Basic market data handling for running many backtests repeatedly.
+
+2) Computes indicators for each ticker
+- Indicator pipeline built around technical indicators (e.g. TA-Lib style indicators).
+- Designed to precompute indicators and attach them to a shared per-ticker dataset.
+- Uses multiprocessing to parallelise work across many tickers / tasks.
+
+3) Generates strategies programmatically (massive search)
+- Supports exploring large strategy spaces (indicator combos + parameters + conditions).
+- Includes an evolutionary / grammar-style approach to generate many candidate strategies.
+
+4) Backtests strategies (prototype engine)
+- Runs backtests over historical bars and reports basic performance metrics.
+- Uses multiprocessing to evaluate many strategies in parallel.
+- NOTE: the "GPU backtest" path is currently a stub/fallback and still runs on CPU.
+
+5) Scales hard on CPU by default
+- High CPU usage is expected: the prototype intentionally uses many workers
+  (e.g., up to ~61 processes depending on the configuration).
+
+============================================================
+LIMITATIONS / NON-REALISTIC ASSUMPTIONS (IMPORTANT)
+============================================================
+
+- Execution model is simplified:
+  - slippage/spread/fills/latency are not modelled realistically yet
+  - order types are basic
+  - position sizing + risk controls are minimal
+
+- Overfitting risk is high if you brute force huge strategy spaces:
+  - the prototype is for experimentation; it does not yet enforce robust statistical validation.
+
+- GPU acceleration is NOT fully implemented:
+  - “GPU” functions currently fall back to CPU logic.
+
+- Performance bottlenecks:
+  - core backtest loop is still Python-heavy in places
+  - multiprocessing overhead can dominate for small tasks/chunks
+
+============================================================
+FUTURE IMPROVEMENTS (NEXT VERSION GOALS)
+============================================================
+
+Backtest realism
+- Proper trading costs: spread + slippage + commissions (volatility/volume-aware)
+- Liquidity constraints: max % ADV, market impact approximations
+- Better order simulation: limit/stop orders, partial fills, queue modelling (approx)
+- Risk management: max drawdown rules, volatility targeting, position sizing, portfolio caps
+- Corporate actions handling: splits/dividends adjustments checks
+
+Validation / robustness
+- Walk-forward evaluation (rolling train/validate/test)
+- Cross-sectional validation: require performance across many tickers, not one
+- Regime testing: volatility regimes, bull/bear periods, event periods
+- Multiple-testing / selection-bias handling (avoid "best-of-million" illusions)
+- Stability constraints: parameter neighbourhood stability (not a single magic setting)
+
+Performance / architecture
+- Replace Python-heavy loops with:
+  - Numba (CPU JIT) for the backtest core
+  - Vectorised logic where possible
+- Implement real GPU path:
+  - CuPy arrays + GPU kernels OR Numba-CUDA
+  - Batch backtesting on GPU for many strategies at once
+- Caching + memory mapping to reduce RAM copies and data transfer overhead
+- Smarter parallelism:
+  - fewer larger tasks; better chunk sizing
+  - avoid repeated indicator recompute; reuse feature matrices
+
+Strategy search improvements
+- Constrain the grammar so generated strategies are valid and interpretable
+- Add rule pruning + complexity penalties to reduce overfitting
+- Add multi-objective search (return vs drawdown vs turnover vs stability)
+- Add “feature selection” mode rather than only indicator soup
+
+Engineering polish
+- Config-driven runs (YAML/JSON) for reproducibility
+- Logging + experiment tracking (run IDs, settings, results)
+- Save/restore of best strategies and their full provenance
+- Minimal tests for core components
+
+============================================================
+NOTES
+============================================================
+
+- This is a prototype intended for rapid iteration.
+- High CPU usage is expected due to multiprocessing.
+- The next version will focus on: (1) realism (costs/fills), (2) robust validation,
+  and (3) accelerating the backtest engine (Numba/GPU).
