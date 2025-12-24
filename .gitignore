@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# --- Project-specific ignores ---
+data/
+results_*.txt
+
+# Ignore all .txt files by default...
+*.txt
+# ...but keep this one tracked
+!todo.txt
+
